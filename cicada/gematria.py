@@ -127,6 +127,39 @@ class Cipher:
     def gematria_sum_lines(self):
         return [Runes(w).gematria_sum() for w in self.text.splitlines()]
 
+    def running_shift(self, key, interrupts="", decrypt=False):
+        # handles modulo
+        def key_generator(key):
+            while True:
+                for k in key:
+                    yield k
+
+        key = key_generator(key)
+        if type(interrupts) == list:
+            interrupts = "".join(interrupts)
+        o = ""
+        i = 0
+
+        for c in self.text:
+            if c not in self.alpha or c in interrupts.upper():
+                o += c
+                continue
+            c_index = self.alpha.index(c)
+            # grab next key value
+            shift = next(key)
+            if decrypt:
+                # invert the shift to decrypt
+                shift = -shift
+            # shift c by shift, wrap around if shift is longer than alpha
+            o += self.alpha[(c_index + shift) % len(self.alpha)]
+            i += 1
+
+        return Cipher(o, self.alpha)
+
+    def vigenere(self, key, interrupts=[], decrypt=False):
+        key = [self.alpha.index(k) for k in key.upper() if k in self.alpha]
+        return self.running_shift(key, interrupts=interrupts, decrypt=decrypt)
+
 
 class Runes(Cipher):
     def __init__(self, text):
