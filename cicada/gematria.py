@@ -127,7 +127,12 @@ class Cipher:
     def gematria_sum_lines(self):
         return [Runes(w).gematria_sum() for w in self.text.splitlines()]
 
+    def to_index(self):
+        return [self.alpha.index(i.upper()) for i in self.text.upper()]
+
     def running_shift(self, key, interrupts="", decrypt=False):
+        if not key:
+            return self.text
         # handles modulo
         def key_generator(key):
             while True:
