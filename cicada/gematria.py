@@ -1,3 +1,6 @@
+import math
+
+
 class Gematria:
     def __init__(self):
         self.gematriaprimus = (
@@ -98,6 +101,17 @@ class Cipher:
         self.text = text
         self.alpha = alpha
         self.gm = Gematria()
+        self.primes = lambda: (  # generates an infinite number of prime numbers
+            n
+            for n, _ in enumerate(iter(int, 1))  # for every value of n
+            if n % 2 != 0  # but only if n is not even
+            and all(
+                n % p != 0 for p in range(3, int(math.sqrt(n)) + 1, 2)
+            )  # not divisable by 3..sqrt(n)+1, skipping even numbers
+            and n
+            != 1  # 1 doesn't count as prime (we're not counting 2 specific factors, so this has to be hardcoded)
+            or n == 2  # bypass the even number skip for 2.
+        )
 
     def to_runes(self):
         return Runes(self.gm.lat_to_run(self.text))
@@ -130,9 +144,10 @@ class Cipher:
     def to_index(self):
         return [self.alpha.index(i.upper()) for i in self.text.upper()]
 
-    def running_shift(self, key, interrupts="", decrypt=False):
+    def running_shift(self, key, interrupts="", skip_indices=[], decrypt=True):
         if not key:
             return self.text
+
         # handles modulo
         def key_generator(key):
             while True:
@@ -149,6 +164,10 @@ class Cipher:
             if c not in self.alpha or c in interrupts.upper():
                 o += c
                 continue
+            if i in skip_indices:
+                o += c
+                i += 1
+                continue
             c_index = self.alpha.index(c)
             # grab next key value
             shift = next(key)
@@ -161,9 +180,17 @@ class Cipher:
 
         return Cipher(o, self.alpha)
 
-    def vigenere(self, key, interrupts=[], decrypt=False):
+    def vigenere(self, key, interrupts=[], decrypt=True):
         key = [self.alpha.index(k) for k in key.upper() if k in self.alpha]
         return self.running_shift(key, interrupts=interrupts, decrypt=decrypt)
+
+    def totient_stream(self, interrupts="", skip_indices=[], decrypt=True):
+        return self.running_shift(
+            (p - 1 for p in self.primes()),
+            interrupts=interrupts,
+            skip_indices=skip_indices,
+            decrypt=decrypt,
+        )
 
 
 class Runes(Cipher):
