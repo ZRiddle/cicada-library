@@ -1,5 +1,6 @@
 import os
 
+
 class Validator:
     def __init__(self):
         self.alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' + ' '
@@ -20,7 +21,6 @@ class Validator:
                 matches += 1
         return float(matches) / len(possible_words)
 
-
     def remove_non_letters(self, message):
         letters_only = []
         message = message.upper()
@@ -28,7 +28,6 @@ class Validator:
             if symbol in self.alpha:
                 letters_only.append(symbol)
         return ''.join(letters_only)
-
 
     def is_cicadian(self, message, word_percentage=20, letter_percentage=85):
         # By default, 20% of the words must exist in the dictionary file, and

@@ -1,93 +1,139 @@
+
 import math
+from typing import List
+
+ALL_RUNES = "ᚠᚢᚦᚩᚱᚳᚷᚹᚻᚾᛁᛄᛇᛈᛉᛋᛏᛒᛖᛗᛚᛝᛟᛞᚪᚫᚣᛡᛠ"
+ALL_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 
 class Gematria:
-    def __init__(self):
-        self.gematriaprimus = (
-            (" ", " ", 0),
-            (u"ᚠ", "f", 2),
-            (u"ᚢ", "v", 3),
-            (u"ᚢ", "u", 3),
-            (u"ᚦ", "T", 5),  # th
-            (u"ᚩ", "o", 7),
-            (u"ᚱ", "r", 11),
-            (u"ᚳ", "k", 13),
-            (u"ᚳ", "c", 13),
-            (u"ᚷ", "g", 17),
-            (u"ᚹ", "w", 19),
-            (u"ᚻ", "h", 23),
-            (u"ᚾ", "n", 29),
-            (u"ᛁ", "i", 31),
-            (u"ᛄ", "j", 37),
-            (u"ᛇ", "E", 41),  # eo
-            (u"ᛈ", "p", 43),
-            (u"ᛉ", "x", 47),
-            (u"ᛋ", "z", 53),
-            (u"ᛋ", "s", 53),
-            (u"ᛏ", "t", 59),
-            (u"ᛒ", "b", 61),
-            (u"ᛖ", "e", 67),
-            (u"ᛗ", "m", 71),
-            (u"ᛚ", "l", 73),
-            (u"ᛝ", "G", 79),  # ing
-            (u"ᛝ", "G", 79),  # ng
-            (u"ᛟ", "O", 83),  # oe
-            (u"ᛞ", "d", 89),
-            (u"ᚪ", "a", 97),
-            (u"ᚫ", "A", 101),  # ae
-            (u"ᚣ", "y", 103),
-            (u"ᛡ", "I", 107),  # ia
-            (u"ᛡ", "I", 107),  # io
-            (u"ᛠ", "X", 109),  # ea
-        )
-        self.latsimple = (
-            ("T", "th"),
-            ("E", "eo"),
-            ("G", "ing"),
-            ("G", "ng"),
-            ("O", "oe"),
-            ("A", "ae"),
-            ("I", "io"),
-            ("I", "ia"),
-            ("X", "ea"),
-        )
+    MAP = (
+        ("\n", "\n", -999, -999),
+        (" ", " ", 0, -1),
+        (u"ᚠ", "f", 2, 0),
+        (u"ᚢ", "v", 3, 1),
+        (u"ᚢ", "u", 3, 1),
+        (u"ᚦ", "T", 5, 2),  # th
+        (u"ᚩ", "o", 7, 3),
+        (u"ᚱ", "r", 11, 4),
+        (u"ᚳ", "k", 13, 5),
+        (u"ᚳ", "c", 13, 5),
+        (u"ᚷ", "g", 17, 6),
+        (u"ᚹ", "w", 19, 7),
+        (u"ᚻ", "h", 23, 8),
+        (u"ᚾ", "n", 29, 9),
+        (u"ᛁ", "i", 31, 10),
+        (u"ᛄ", "j", 37, 11),
+        (u"ᛇ", "E", 41, 12),  # eo
+        (u"ᛈ", "p", 43, 13),
+        (u"ᛉ", "x", 47, 14),
+        (u"ᛋ", "z", 53, 15),
+        (u"ᛋ", "s", 53, 15),
+        (u"ᛏ", "t", 59, 16),
+        (u"ᛒ", "b", 61, 17),
+        (u"ᛖ", "e", 67, 18),
+        (u"ᛗ", "m", 71, 19),
+        (u"ᛚ", "l", 73, 20),
+        (u"ᛝ", "G", 79, 21),  # ng
+        (u"ᛝ", "G", 79, 21),  # ing
+        (u"ᛟ", "O", 83, 22),  # oe
+        (u"ᛞ", "d", 89, 23),
+        (u"ᚪ", "a", 97, 24),
+        (u"ᚫ", "A", 101, 25),  # ae
+        (u"ᚣ", "y", 103, 26),
+        (u"ᛡ", "I", 107, 27),  # ia
+        (u"ᛡ", "I", 107, 27),  # io
+        (u"ᛠ", "X", 109, 28),  # ea
+    )
+    LAT_SIMPLE = (
+        ("T", "th"),
+        ("E", "eo"),
+        ("G", "ing"),
+        ("G", "ng"),
+        ("O", "oe"),
+        ("A", "ae"),
+        ("I", "io"),
+        ("I", "ia"),
+        ("X", "ea"),
+    )
+
+    @classmethod
+    def get_rune_idx(cls, rune: str) -> int:
+        return ALL_RUNES.find(rune)
+
+    @classmethod
+    def get_idx_from_rune(cls, idx: int) -> str:
+        return ALL_RUNES[idx]
 
     # algorithm taken from here: https://pastebin.com/6v1XC1kV
-    def gem_map(self, x, src, dest):
-        m = {p[src]: p[dest] for p in self.gematriaprimus}
+    @classmethod
+    def gem_map(cls, x: any, src: int, dest: int):
+        m = {p[src]: p[dest] for p in cls.MAP}
         return [m[c] if c in m else c for c in x]
 
-    def lat_to_sim(self, x):
-        x = x.replace("q", "cw")
-        for sim in self.latsimple:
+    @classmethod
+    def lat_to_sim(cls, x: str) -> str:
+        x = x.replace("qu", "cw")
+        for sim in cls.LAT_SIMPLE:
             x = x.replace(sim[1], sim[0])
         return x
 
-    def sim_to_lat(self, x):
-        for sim in self.latsimple:
+    @classmethod
+    def sim_to_lat(cls, x: str) -> str:
+        for sim in cls.LAT_SIMPLE:
             x = x.replace(sim[0], sim[1])
         return x
 
-    def run_to_lat(self, x):
-        return self.sim_to_lat("".join(self.gem_map(x, 0, 1)))
+    @classmethod
+    def run_to_lat(cls, x: str) -> str:
+        return cls.sim_to_lat("".join(cls.gem_map(x, 0, 1)))
 
-    def run_to_num(self, x):
-        return self.gem_map(x, 0, 2)
+    @classmethod
+    def run_to_num(cls, x: str) -> List[int]:
+        return cls.gem_map(x, 0, 2)
 
-    def lat_to_run(self, x):
-        x = x.lower().replace("qu", "q")
-        return "".join(self.gem_map(self.lat_to_sim(x), 1, 0))
+    @classmethod
+    def lat_to_run(cls, x: str) -> str:
+        x = x.lower().replace("qu", "cw")
+        return "".join(cls.gem_map(cls.lat_to_sim(x), 1, 0))
 
-    def lat_to_num(self, x):
+    @classmethod
+    def lat_to_num(cls, x: str) -> List[int]:
         # strip non alpha chars when converting to num
         x = "".join([c for c in x if c.isalpha() or c == " "])
-        return self.gem_map(self.lat_to_sim(x.lower()), 1, 2)
+        return cls.gem_map(cls.lat_to_sim(x.lower()), 1, 2)
 
-    def num_to_run(self, x):
-        return self.gem_map(x, 2, 0)
+    @classmethod
+    def num_to_run(cls, x: List[int]) -> str:
+        return cls.gem_map(x, 2, 0)
 
-    def num_to_lat(self, x):
-        return self.sim_to_lat("".join(self.gem_map(x, 2, 1)))
+    @classmethod
+    def num_to_lat(cls, x: List[int]) -> str:
+        return cls.sim_to_lat("".join(cls.gem_map(x, 2, 1)))
+
+    @classmethod
+    def lat_to_idx(cls, x: str) -> List[int]:
+        return cls.gem_map(cls.lat_to_sim(x.lower()), 1, 3)
+
+    @classmethod
+    def idx_to_lat(cls, x: List[int]) -> str:
+        return cls.sim_to_lat("".join(cls.gem_map(x, 3, 1))).upper()
+
+    @classmethod
+    def run_to_idx(cls, x: str) -> List[int]:
+        return cls.gem_map(x, 0, 3)
+
+    @classmethod
+    def idx_to_run(cls, x: List[int]) -> str:
+        return cls.sim_to_lat("".join(cls.gem_map(x, 3, 0)))
+
+    @classmethod
+    def sum_lat(cls, x: str) -> int:
+        return sum(cls.lat_to_num(x))
+
+    @classmethod
+    def sum_run(cls, x: str) -> int:
+        return sum(cls.run_to_num(x))
 
 
 class Cipher:
@@ -100,7 +146,6 @@ class Cipher:
     def __init__(self, text, alpha):
         self.text = text
         self.alpha = alpha
-        self.gm = Gematria()
         self.primes = lambda: (  # generates an infinite number of prime numbers
             n
             for n, _ in enumerate(iter(int, 1))  # for every value of n
@@ -114,13 +159,13 @@ class Cipher:
         )
 
     def to_runes(self):
-        return Runes(self.gm.lat_to_run(self.text))
+        return Runes(Gematria.lat_to_run(self.text))
 
     def to_latin(self):
-        return Latin(self.gm.run_to_lat(self.text))
+        return Latin(Gematria.run_to_lat(self.text))
 
     def to_numbers(self):
-        return self.gm.run_to_num(self.gm.lat_to_run(self.text))
+        return Gematria.run_to_num(Gematria.lat_to_run(self.text))
 
     def sub(self, plain, cipher):
         self.text = self.text.upper()
@@ -195,17 +240,22 @@ class Cipher:
 
 class Runes(Cipher):
     def __init__(self, text):
-        super().__init__(text, "ᚠᚢᚦᚩᚱᚳᚷᚹᚻᚾᛁᛄᛇᛈᛉᛋᛏᛒᛖᛗᛚᛝᛟᛞᚪᚫᚣᛡᛠ")
+        super().__init__(text, ALL_RUNES)
 
 
 class Latin(Cipher):
     def __init__(self, text):
-        super().__init__(text.upper(), "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+        super().__init__(text.upper(), ALL_LETTERS)
 
 
 class Hex(Cipher):
     def __init__(self, text):
         super().__init__(text.upper(), "0123456789ABCDEF")
+
+
+# for num in range(2,12):
+#     rems = [num % factor for factor in range(2, int((num+1)/2))]
+#     print(f"{num}\t{rems}")
 
 
 if __name__ == "__main__":

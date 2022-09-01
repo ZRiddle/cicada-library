@@ -1,31 +1,74 @@
+
+from itertools import count, islice
 from cicada import LiberPrimus
-from cicada.gematria import Latin, Runes
+from cicada.gematria import Latin, Runes, Gematria
+
+from cicada.pybar import PyBar
+import math
 
 # load the lp from file
 lp = LiberPrimus()
 
-cipher = Latin("crack me, baby. This is some text to crack. Let's see if we can crack it")
-cipher.substitute("ABCDEFGHIJKLMN", "QWERTYUIOPASDF")
-#cipher.substitute("ABCDEFGHIJKLMNOPQRSTUVWXYZ", "ABCDEFGHIJKLMNOPQRSUTVWXYZ")
-print(cipher)
-cipher = cipher.to_runes().text
+gm = Gematria()
 
-print("Cracking: %s" % cipher)
 
-from cicada import Validator
-from itertools import permutations
+def is_prime(num):
+    return num == 2 or num == 3 or min([num % factor for factor in range(2, int((num+2)/2))]) > 0
 
-v = Validator()
+def generate_primes():
+    yield 2
+    for num in count(3, 2):
+        if is_prime(num):
+            yield num
 
-# convert the cipher string from runes to latin
-cipher = Runes(cipher).to_latin()
+def nth_prime(n):
+    return next(islice(generate_primes(), n, None))
 
-# Try every combination of substitutes
-from cicada.pybar import PyBar
-import math
-bar = PyBar(max=math.factorial(19), poll=1)
-for combination in permutations("YRABMSTHFLNETCXIOWK"):
-    text = cipher.substitute("YRABMSTHFLNETCXIOWK", "".join(combination), mutable=False)
-    bar.update(bar.percent(), bar.progress(), bar.bar(), bar.rate(time=1), "Current: ", text, next=True)
-    if v.is_cicadian(text):
-        bar.echo(text)
+
+for num in range(2,12):
+    rems = [num % factor for factor in range(2, int((num+1)/2))]
+    print(f"{num}\t{rems}")
+
+
+
+cipher = Runes(lp.strip_delims(lp.pages[-2].text)).text
+cipher = cipher.split("\n\n")[0] + cipher.split("\n\n")[2]
+
+cipher_idx = gm.run_to_idx(cipher)
+
+decoded_idx = cipher_idx.copy()
+
+
+letter_idx = 0
+need_to_skip = True
+for idx, num in enumerate(decoded_idx):
+    if need_to_skip and letter_idx == 57:
+        letter_idx -= 1
+        need_to_skip = False
+    if num >= 0:
+        rune_idx = (cipher_idx[idx] - nth_prime(letter_idx) + 1) % 29
+        decoded_idx[idx] = rune_idx
+        letter_idx += 1
+
+
+output_runes = gm.idx_to_run(decoded_idx)
+output_latin = gm.run_to_lat(output_runes)
+
+print(cipher_idx[:5])
+print(decoded_idx[:5])
+
+print(output_latin)
+
+
+
+
+# Useful Prime Lookups
+# N    | Prime
+# ------------
+# 0    | 2
+# 173  | 1033
+# 1033 | 8237
+# 1131 | 9133
+# 3301 | 30593
+
+
