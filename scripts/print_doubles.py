@@ -2,8 +2,8 @@
 from typing import List
 
 from cicada.gematria import Gematria
-from cicada.liberprimus import LiberPrimus
-from cicada.utils import FIRST_856_PRIMES
+from cicada.liberprimus import LiberPrimus, Cribs, ALL_RUNES
+from scripts.find_string_by_length import UnsolvedSentences
 
 
 def has_double(word: str) -> bool:
@@ -14,31 +14,38 @@ def has_double(word: str) -> bool:
 
 
 if __name__ == "__main__":
-    text_clean = LiberPrimus.get_text_only(LiberPrimus.book).upper()
+    import sys
+
+    try:
+        print_cribs = sys.argv[1]
+    except:
+        print_cribs = False
+
+    lp = UnsolvedSentences()
+    letters_only = "".join(lp.sentences).replace(" ", "")
+
+    doubles_idx = []
+
+    for i in range(len(letters_only)-1):
+        if letters_only[i] == letters_only[i+1]:
+            # print(f"{i}\t{letters_only[i]}{letters_only[i+1]}")
+            sent, ind = lp.get_sentence_by_letter_index(i)
+            for rune in ALL_RUNES:
+                sent = sent.replace(f"{rune}{rune}", f"\33[43m{rune}{rune}\33[0m").replace(f"{rune} {rune}", f"\33[43m{rune} {rune}\33[0m")
+            print(sent)
+            doubles_idx.append(i)
 
     deltas = []
     prev_idx = 0
-    for i in range(1, len(text_clean)):
-        if text_clean[i-1] == text_clean[i]:
-            print(f"{i-1}-{i}\t{text_clean[i-1:i+1]}")
-            delta = i-1 - prev_idx
-            if prev_idx != 0:
-                deltas.append(delta)
-            prev_idx = i-1
+    for i, idx in enumerate(doubles_idx):
+        delta = idx - prev_idx
+        deltas.append(delta)
+        prev_idx = idx
 
-    print(deltas)
+    print(f"\nIdx\tDelta")
+    print("----------------")
+    for idx, delta in zip(doubles_idx, deltas):
+        print(f"{idx:5.0f}\t{delta:3.0f}")
 
-    # # Tao Te Ching
-    # tao_words = [x.lower() for x in LiberPrimus.TAO.replace("\n", " ").split(" ")]
-    # tao_word_lengths = [len(word) for word in tao_words]
-    #
-    # tao_match_count = 0
-    # for i in range(len(tao_word_lengths)):
-    #     if has_double(tao_words[i]):
-    #         # print(f"found a match @ {i}")
-    #         # Found a match
-    #         tao_words[i] = "\33[43m" + tao_words[i] + "\33[0m"
-    #         tao_match_count += 1
-
-    # print(f"\nTao Te Ching, {tao_match_count} matches")
-    # print(" ".join(tao_words))
+    if print_cribs:
+        Cribs.get_cribs_with('ia|io')

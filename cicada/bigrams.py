@@ -7,24 +7,25 @@ import matplotlib.font_manager
 import matplotlib.pyplot as plt
 
 from cicada.gematria import Gematria, ALL_RUNES
-from cicada.liberprimus import LiberPrimus
-from cicada.utils import phi, FIRST_856_PRIMES
+from cicada.liberprimus import LiberPrimus, UnsolvedLP
+from cicada.utils import phi, FIRST_10k_PRIMES
 
 
-def get_rune_bigram_matrix(text: Union[str, List[str]]) -> np.array:
+def get_rune_bigram_matrix(text: Union[str, List[str]], offset: int = 1, verbose: bool = False) -> np.array:
     """Build a matrix count of bigrams from an input text"""
-    text_clean = LiberPrimus.get_text_only(text).upper()
+    text_clean = LiberPrimus.get_text_only(text, only_runes=True).upper()
     # print(f"Len of unsolved LP runes only = {len(text_clean)}")
     output = np.zeros((len(ALL_RUNES), len(ALL_RUNES)))
 
-    for i in range(len(text_clean)-1):
+    for i in range(len(text_clean)-offset):
         idx_i = Gematria.get_rune_idx(text_clean[i])
-        idx_i1 = Gematria.get_rune_idx(text_clean[i+1])
+        idx_i1 = Gematria.get_rune_idx(text_clean[i+offset])
         if idx_i >= 0 and idx_i1 >= 0:
             output[idx_i, idx_i1] += 1
 
-    print(f"Doublet Perc: {doublet_percentage(output):.6f}")
-    print(f"Doublet Perc delta: {doublet_percentage(output)*29-1/29**2:.6f}")
+    if verbose:
+        print(f" Doublet Perc: {doublet_percentage(output)*100:.3f}%\t{output.trace():.0f} / {output.sum():.0f}")
+        # print(f"Doublet Perc delta: {doublet_percentage(output)*29-1/29**2:.6f}")
     return output.astype(int)
 
 
@@ -138,20 +139,30 @@ def my_gauss(x, sigma=1, h=1, mid=0):
     return h * exp(-pow(x-mid, 2)/(2*variance))
 
 
-def get_lp_bigram_matrix() -> np.array:
-    lp = LiberPrimus.book
-    return get_rune_bigram_matrix(lp)
+def get_lp_bigram_matrix(offset: int = 1, verbose: bool = False) -> np.array:
+    lp_runes = "".join([x.rune for x in UnsolvedLP.runes])
+    # lp_runes = "".join([x for x in LiberPrimus.pages[-4:-2]])
+    # lp_runes_offset = Gematria.shift_by_previous_rune(lp_runes)
+    return get_rune_bigram_matrix(lp_runes, offset=offset, verbose=verbose)
 
 
 if __name__ == "__main__":
-    bigram_matrix = get_lp_bigram_matrix()
+    import sys
+    try:
+        plot_it = sys.argv[1]
+    except:
+        plot_it = False
+    offset = 1
+
+    bigram_matrix = get_lp_bigram_matrix(offset=offset, verbose=True)
     counts = get_counts(bigram_matrix.flatten())
 
     lp = LiberPrimus.book
-    plot_freq(bigram_matrix)
-    plt.savefig("unsolved_bigram_heatmap.png")
+    plot_freq(bigram_matrix, f"Unsolved LP - offset = {offset}")
+    plot_counts(counts)
+    # plt.savefig("unsolved_bigram_heatmap.png")
 
-    if False:
+    if plot_it:
         fig, axes = plt.subplots(nrows=3, ncols=3, figsize=(15, 13))
         print(f"\nPages\tDoublet %")
         for i, ax in enumerate(axes.flat, start=1):
@@ -165,10 +176,10 @@ if __name__ == "__main__":
         axes[-1, -1].axis('off')
         fig.tight_layout()
 
-    # prime_totients_mod29 = [phi(x) % 29 for x in FIRST_856_PRIMES]
+    # prime_totients_mod29 = [phi(x) % 29 for x in FIRST_10k_PRIMES]
     # N = 3000
     # natural_totients_mod29 = [phi(x) % 29 for x in range(N)]
-    # plot_counts(get_counts(prime_totients_mod29), f"Prime Numbers up to {FIRST_856_PRIMES[-1]} (totient % 29) distribution")
+    # plot_counts(get_counts(prime_totients_mod29), f"Prime Numbers up to {FIRST_10k_PRIMES[-1]} (totient % 29) distribution")
     # plot_counts(get_counts(natural_totients_mod29), f"Natural Numbers up to {N} (totient % 29) distribution")
 
     plt.show()

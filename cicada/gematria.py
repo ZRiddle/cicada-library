@@ -2,49 +2,54 @@
 import math
 from typing import List
 
+from cicada.utils import is_prime
+
 ALL_RUNES = "ᚠᚢᚦᚩᚱᚳᚷᚹᚻᚾᛁᛄᛇᛈᛉᛋᛏᛒᛖᛗᛚᛝᛟᛞᚪᚫᚣᛡᛠ"
 ALL_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
+DJU_BEI = "ᛞᛄᚢ-ᛒᛖᛁ"
+
+MAP = (
+    ("\n", "\n", -999, -999),
+    (" ", " ", 0, -1),
+    (u"ᚠ", "f", 2, 0),
+    (u"ᚢ", "v", 3, 1),
+    (u"ᚢ", "u", 3, 1),
+    (u"ᚦ", "T", 5, 2),  # th
+    (u"ᚩ", "o", 7, 3),
+    (u"ᚱ", "r", 11, 4),
+    (u"ᚳ", "k", 13, 5),
+    (u"ᚳ", "c", 13, 5),
+    (u"ᚷ", "g", 17, 6),
+    (u"ᚹ", "w", 19, 7),
+    (u"ᚻ", "h", 23, 8),
+    (u"ᚾ", "n", 29, 9),
+    (u"ᛁ", "i", 31, 10),
+    (u"ᛄ", "j", 37, 11),
+    (u"ᛇ", "E", 41, 12),  # eo
+    (u"ᛈ", "p", 43, 13),
+    (u"ᛉ", "x", 47, 14),
+    (u"ᛋ", "z", 53, 15),
+    (u"ᛋ", "s", 53, 15),
+    (u"ᛏ", "t", 59, 16),
+    (u"ᛒ", "b", 61, 17),
+    (u"ᛖ", "e", 67, 18),
+    (u"ᛗ", "m", 71, 19),
+    (u"ᛚ", "l", 73, 20),
+    (u"ᛝ", "G", 79, 21),  # ng
+    (u"ᛝ", "G", 79, 21),  # ing
+    (u"ᛟ", "O", 83, 22),  # oe
+    (u"ᛞ", "d", 89, 23),
+    (u"ᚪ", "a", 97, 24),
+    (u"ᚫ", "A", 101, 25),  # ae
+    (u"ᚣ", "y", 103, 26),
+    (u"ᛡ", "I", 107, 27),  # ia
+    (u"ᛡ", "I", 107, 27),  # io
+    (u"ᛠ", "X", 109, 28),  # ea
+)
+
 
 class Gematria:
-    MAP = (
-        ("\n", "\n", -999, -999),
-        (" ", " ", 0, -1),
-        (u"ᚠ", "f", 2, 0),
-        (u"ᚢ", "v", 3, 1),
-        (u"ᚢ", "u", 3, 1),
-        (u"ᚦ", "T", 5, 2),  # th
-        (u"ᚩ", "o", 7, 3),
-        (u"ᚱ", "r", 11, 4),
-        (u"ᚳ", "k", 13, 5),
-        (u"ᚳ", "c", 13, 5),
-        (u"ᚷ", "g", 17, 6),
-        (u"ᚹ", "w", 19, 7),
-        (u"ᚻ", "h", 23, 8),
-        (u"ᚾ", "n", 29, 9),
-        (u"ᛁ", "i", 31, 10),
-        (u"ᛄ", "j", 37, 11),
-        (u"ᛇ", "E", 41, 12),  # eo
-        (u"ᛈ", "p", 43, 13),
-        (u"ᛉ", "x", 47, 14),
-        (u"ᛋ", "z", 53, 15),
-        (u"ᛋ", "s", 53, 15),
-        (u"ᛏ", "t", 59, 16),
-        (u"ᛒ", "b", 61, 17),
-        (u"ᛖ", "e", 67, 18),
-        (u"ᛗ", "m", 71, 19),
-        (u"ᛚ", "l", 73, 20),
-        (u"ᛝ", "G", 79, 21),  # ng
-        (u"ᛝ", "G", 79, 21),  # ing
-        (u"ᛟ", "O", 83, 22),  # oe
-        (u"ᛞ", "d", 89, 23),
-        (u"ᚪ", "a", 97, 24),
-        (u"ᚫ", "A", 101, 25),  # ae
-        (u"ᚣ", "y", 103, 26),
-        (u"ᛡ", "I", 107, 27),  # ia
-        (u"ᛡ", "I", 107, 27),  # io
-        (u"ᛠ", "X", 109, 28),  # ea
-    )
     LAT_SIMPLE = (
         ("T", "th"),
         ("E", "eo"),
@@ -56,6 +61,8 @@ class Gematria:
         ("I", "ia"),
         ("X", "ea"),
     )
+    RUNE_INDEXES = [i for i in range(29)]
+    _MAPS = {i: {j: {p[i]: p[j] for p in MAP} for j in range(4) if i != j} for i in range(4)}
 
     @classmethod
     def get_rune_idx(cls, rune: str) -> int:
@@ -68,7 +75,7 @@ class Gematria:
     # algorithm taken from here: https://pastebin.com/6v1XC1kV
     @classmethod
     def gem_map(cls, x: any, src: int, dest: int):
-        m = {p[src]: p[dest] for p in cls.MAP}
+        m = cls._MAPS[src][dest]
         return [m[c] if c in m else c for c in x]
 
     @classmethod
@@ -105,7 +112,7 @@ class Gematria:
 
     @classmethod
     def num_to_run(cls, x: List[int]) -> str:
-        return cls.gem_map(x, 2, 0)
+        return "".join(cls.gem_map(x, 2, 0))
 
     @classmethod
     def num_to_lat(cls, x: List[int]) -> str:
@@ -134,6 +141,22 @@ class Gematria:
     @classmethod
     def sum_run(cls, x: str) -> int:
         return sum(cls.run_to_num(x))
+
+    @classmethod
+    def shift_by_previous_rune(cls, runes, start_rune: int = 0) -> str:
+        """
+        If we assume the LP is shifted by the previous rune to achieve the doublet distribution
+        then this will undo that
+        """
+        output = cls.run_to_idx(runes)
+        rune_indexes = output.copy()
+
+        prev_rune = start_rune
+        for i in range(len(output)):
+            if output[i] in cls.RUNE_INDEXES:
+                output[i] = (output[i] + prev_rune) % 29
+                prev_rune = rune_indexes[i]
+        return cls.idx_to_run(output)
 
 
 class Cipher:
@@ -259,19 +282,31 @@ class Hex(Cipher):
 
 
 if __name__ == "__main__":
-    r = Runes("ᚱ ᛝᚱᚪᛗᚹ ᛄᛁᚻᛖᛁᛡᛁ ᛗᚫᚣᚹ ᛠᚪᚫᚾ")
-    print(r)
-    print(r.to_latin())
-    print(r.sub("ᚠᚢᚦᚩᚱᚳᚷᚹᚻᚾᛁᛄᛇᛈᛉᛋᛏᛒᛖᛗᛚᛝᛟᛞᚪᚫᚣᛡᛠ", "ABCDEFGHIJKLMNOPQRSTUVWXYZ123").text)
-    print(r.atbash().text)
-    print(r.to_numbers())
-    print(r.gematria_sum())
-    print(r.to_latin().gematria_sum())
-    print(r.gematria_sum_words())
-    print(r.gematria_sum_lines())
-    # ᚻᛖᛚᛚᚩ
-    h = Latin("Hello").to_runes()
-    print(h.text)
-    for i in range(4):
-        print(h.shift(i).text)
-        print(Hex("afe81723").shift(i))
+    import sys
+
+    word = sys.argv[1].upper()
+    gem_sum = sum(Gematria.lat_to_num(word))
+
+    print(f'sum( "{word}" ) = {gem_sum}, prime={is_prime(gem_sum)}')
+
+
+
+    # txt = "Butter my toast".upper()
+    # print(f"text:\t{txt}")
+    # txt_run = Gematria.lat_to_run(txt)
+    # txt_idx = Gematria.lat_to_idx(txt)
+    #
+    # txt_run_idx = Gematria.run_to_idx(txt_run)
+    # txt_idx_run = Gematria.idx_to_run(txt_idx)
+    #
+    # print(f"Runes")
+    # print(f"{txt_run}")
+    # print(f"{txt_idx_run}")
+    # print(f"Idx")
+    # print(f"{txt_idx}")
+    # print(f"{txt_run_idx}")
+    # print(f"Text")
+    # print(f"{Gematria.run_to_lat(txt_idx_run)}")
+    # print(f"{Gematria.idx_to_lat(txt_run_idx)}")
+    #
+    # print(f"")

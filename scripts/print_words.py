@@ -1,5 +1,6 @@
 
 from cicada.gematria import Gematria
+from cicada.liberprimus import LiberPrimus
 
 TEXT = """
 A WARNING
@@ -182,7 +183,7 @@ NO ONE ELSE CAN LIVE IN IT OR CREATE IT FOR YOU.
 
 WHAT YOU FOCUS ON EXPANDS. 
 FOCUS ON WHAT YOU WANT, NOT ON WHAT YOU DON'T WANT:
-"""
+""".replace("\n", " ").replace(".", "").replace('"', "").replace(":", "").replace(",", "").replace("'", "")
 
 
 if __name__ == "__main__":
@@ -192,13 +193,25 @@ if __name__ == "__main__":
     except:
         word_len = len(sys.argv[1])
 
-    text = TEXT.replace("\n", " ").replace(".", "").replace('"', "").replace(":", "").replace(",", "").replace("'", "")
+    try:
+        all = sys.argv[2]
+    except:
+        all = False
 
     print(f"\nWords of length {word_len}")
     words = []
-    for word in text.split(" "):
+
+    txt = TEXT + LiberPrimus.tao.replace("\n"," ")
+    for word in txt.split(" "):
         if len(Gematria.lat_to_run(word)) == word_len:
             words.append(word.upper())
 
     for word in sorted(set(words)):
         print(word)
+
+    if all:
+        with open(f"data/cribs/mycribs{word_len}.txt", "r") as f:
+            all_words = [w.upper() for w in f.read().split(" ") if w]
+
+        for word in all_words:
+            print(word)

@@ -1,2 +1,2 @@
 from .liberprimus import LiberPrimus
-from .validator import Validator
+from cicada.validate._validator_old import Validator
