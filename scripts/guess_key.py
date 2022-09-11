@@ -52,7 +52,7 @@ if __name__ == "__main__":
 
     mults = [1, 2, 27, 28]  # [x for x in range(1, 29)]
     pt_fcns_inverse = [CipherFcns.un_iden, CipherFcns.un_phi, CipherFcns.un_nth_prime]
-    key_fcns = [CipherFcns.one]  # [CipherFcns.iden, CipherFcns.phi, CipherFcns.nth_prime, ]
+    key_fcns = [CipherFcns.iden, CipherFcns.phi, CipherFcns.nth_prime, CipherFcns.one]
 
     apply_mult_fcns = [CipherFcns.mul, CipherFcns.div]
 
